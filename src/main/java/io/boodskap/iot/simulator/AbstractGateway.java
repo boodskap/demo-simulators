@@ -1,7 +1,11 @@
 package io.boodskap.iot.simulator;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -17,6 +21,7 @@ public abstract class AbstractGateway implements IGateway, MqttCallback {
 	
 	private MqttConnectOptions opts;
 	private MqttClient mqtt;
+	private boolean subscribed;
 	
 	protected AbstractGateway() {
 	}
@@ -48,11 +53,25 @@ public abstract class AbstractGateway implements IGateway, MqttCallback {
 			try { mqtt.connect(opts); }catch(Exception ex) {System.err.println(ex.getMessage());};
 		}
 		
+		if(mqtt.isConnected() && !subscribed) {
+			getIncomingTopics().forEach(t -> {
+				System.out.format("Subscribing to %s\n", t);
+				try { mqtt.subscribe(t, 0); }catch(Exception ex) {ex.printStackTrace();}
+				subscribed = true;
+			});
+		}
+		
+		
 		return mqtt;
 	}
 
 	@Override
-	public void sendHttp(String deviceToken, int specId, Map<String, Object> message) throws Exception {
+	public void send(String deviceToken, long specId, Map<String, Object> message) throws Exception{
+		sendMqtt(deviceToken, specId, message);
+	}
+	
+	@Override
+	public void sendHttp(String deviceToken, long specId, Map<String, Object> message) throws Exception {
 		
 		JSONObject json = new JSONObject(message);
 		
@@ -70,11 +89,12 @@ public abstract class AbstractGateway implements IGateway, MqttCallback {
 	}
 	
 	@Override
-	public void sendMqtt(String deviceToken, int specId, Map<String, Object> message) throws Exception {
+	public void sendMqtt(String deviceToken, long specId, Map<String, Object> message) throws Exception {
 
 		MqttClient mqtt = getMqtt();
 		
 		if(!mqtt.isConnected()) {
+			subscribed = false;
 			System.err.println("MQTT not connected.");
 			return;
 		}
@@ -91,6 +111,48 @@ public abstract class AbstractGateway implements IGateway, MqttCallback {
 		mqtt.publish(topic, packet);
 		
 		System.out.format("Published to %s data:%s\n", topic, new String(data));
+	}
+
+
+	@Override
+	public void send(String deviceToken, String ruleType, DataType dataType, byte[] data, String contentType, String properties) throws Exception {
+
+		MqttClient mqtt = getMqtt();
+		
+		if(!mqtt.isConnected()) {
+			System.err.println("MQTT not connected.");
+			return;
+		}
+		
+		MqttMessage packet = new MqttMessage(data);
+		packet.setQos(2);
+		
+		final String topic = String.format("/%s/pub/bin/%s/%s/%s", deviceToken, ruleType, contentType, properties);
+		
+		switch(dataType) {
+		case HEX:
+			System.out.format("Publishing to %s data:%s\n", topic, Hex.encodeHexString(data));
+			break;
+		case JSON:
+			System.out.format("Publishing to %s data:%s\n", topic, new JSONObject(new String(data)));
+			break;
+		case STRING:
+			System.out.format("Publishing to %s data:%s\n", topic, new String(data));
+			break;
+		default:
+		case BASE64:
+			System.out.format("Publishing to %s data:%s\n", topic, Base64.encodeBase64String(data));
+			break;
+		
+		}
+		
+		mqtt.publish(topic, packet);
+		
+	}
+
+	@Override
+	public Set<String> getIncomingTopics() {
+		return new HashSet<String>();
 	}
 
 

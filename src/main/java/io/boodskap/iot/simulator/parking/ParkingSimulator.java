@@ -5,22 +5,23 @@ import java.util.Map;
 
 import org.apache.commons.lang3.RandomUtils;
 
+import io.boodskap.iot.simulator.AbstractSimulator;
 import io.boodskap.iot.simulator.Config;
-import io.boodskap.iot.simulator.ISimulator;
 
-public class ParkingSimulator implements ISimulator {
+public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 	
 	private long nextSimulationTime;
 	private boolean occupied;
 	
-	private final ParkingGateway gateway;
 	private final int row;
 	private final int column;
+	private final String deviceId;
 	
 	public ParkingSimulator(ParkingGateway gateway, int row, int column) {
-		this.gateway = gateway;
+		super(gateway);
 		this.row = row;
 		this.column = column;
+		this.deviceId = String.format("PKGS%d%d", row, column);
 		calculateNextSimulationTime();
 	}
 
@@ -32,11 +33,6 @@ public class ParkingSimulator implements ISimulator {
 	@Override
 	public String getSensorType() {
 		return "PARKING";
-	}
-
-	@Override
-	public ParkingGateway getGateway() {
-		return gateway;
 	}
 
 	@Override
@@ -55,8 +51,18 @@ public class ParkingSimulator implements ISimulator {
 			
 			Map<String, Object> data = new HashMap<>();
 			
-			data.put("garage", gateway.getGarageId());
+			data.put("garage", getGateway().getGarageId());
+			
+			if(!getGateway().isConfigSent()) {
+				data.put("lot", String.format("%d,%d", getGateway().getRows(), getGateway().getColumns()));
+				getGateway().setConfigSent(true);
+				return data;
+			}
+			
+			//System.exit(-1);
+			
 			data.put("lot", String.format("ROW%dCOL%d", row, column));
+			data.put("devid", deviceId);
 			
 			if(occupied) {
 				data.put("distance", RandomUtils.nextInt(5500, 7501));

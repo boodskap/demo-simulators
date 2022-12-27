@@ -1,7 +1,6 @@
 package io.boodskap.iot.simulator.parking;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
@@ -16,6 +15,7 @@ public class ParkingGateway extends AbstractGateway {
 	private final String garageId;
 	private final int rows;
 	private final int columns;
+	private boolean configSent;
 	
 	private final Set<ISimulator> simulators = new HashSet<>();
 	
@@ -25,11 +25,12 @@ public class ParkingGateway extends AbstractGateway {
 		this.columns = columns;
 	}
 
+	/**
 	@Override
-	public void send(String deviceToken, int specId, Map<String, Object> message) throws Exception {
-		//sendHttp(deviceToken, specId, message);
-		sendMqtt(deviceToken, specId, message);
+	public void send(String deviceToken, long specId, Map<String, Object> message) throws Exception {
+		sendHttp(deviceToken, specId, message);
 	}
+	**/
 
 	@Override
 	public void init() throws Exception {
@@ -75,6 +76,14 @@ public class ParkingGateway extends AbstractGateway {
 
 	@Override
 	public void deliveryComplete(IMqttDeliveryToken token) {
+	}
+
+	public boolean isConfigSent() {
+		return configSent;
+	}
+
+	public void setConfigSent(boolean configSent) {
+		this.configSent = configSent;
 	}
 
 }

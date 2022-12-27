@@ -1,7 +1,5 @@
 package io.boodskap.iot.simulator;
 
-import java.util.Map;
-
 public interface ISimulator {
 	
 	public IGateway getGateway();
@@ -12,5 +10,19 @@ public interface ISimulator {
 	
 	public boolean canSimulate();
 
-	public Map<String, Object> simulate();
+	/**
+	 * 
+	 * @return Either Map<String, Object> or byte[]
+	 */
+	public Object simulate();
+	
+	public long getSpecId();
+	
+	public String getRuleType();
+	
+	public String getContentType();
+	
+	public String getProperties();
+	
+	public DataType getBinaryDataType();
 }

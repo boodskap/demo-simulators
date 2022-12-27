@@ -9,11 +9,16 @@ public interface IGateway {
 	
 	public String getDeviceToken();
 	
-	public Set<ISimulator> getSimulators();
+	public Set<? extends ISimulator> getSimulators();
 	
-	public void send(String deviceToken, int specId, Map<String, Object> message) throws Exception;
+	public void send(String deviceToken, long specId, Map<String, Object> message) throws Exception;
 	
-	public void sendMqtt(String deviceToken, int specId, Map<String, Object> message) throws Exception;
+	public void sendMqtt(String deviceToken, long specId, Map<String, Object> message) throws Exception;
 
-	public void sendHttp(String deviceToken, int specId, Map<String, Object> message) throws Exception;
+	public void sendHttp(String deviceToken, long specId, Map<String, Object> message) throws Exception;
+
+	public void send(String deviceToken, String ruleType, DataType dataType, byte[] data, String contentType, String properties) throws Exception;
+	
+	public Set<String> getIncomingTopics();
+	
 }

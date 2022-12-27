@@ -18,6 +18,7 @@ public class SimulatorMain{
 	static {
 
 		GATEWAYS.add(new ParkingGateway(Config.get().getParkingGarageId(), Config.get().getParkingGarageRows(), Config.get().getParkingGarageCols()));
+		//GATEWAYS.add(new DraginoGateway("GRAGINOGW01"));
 	}
 	
 	static {
@@ -72,6 +73,7 @@ public class SimulatorMain{
 
 	class MessageSenders implements Runnable{
 		
+		@SuppressWarnings("unchecked")
 		@Override
 		public void run() {
 			try {
@@ -82,13 +84,25 @@ public class SimulatorMain{
 					
 					try {
 						
-						Map<String, Object> data = simulator.simulate();
+						Object data = simulator.simulate();
 						
-						data.put("sensor", simulator.getSensorType());
+						if(data instanceof Map) {
+							
+							Map<String, Object> message = (Map<String, Object>) data;
+							
+							message.put("sensor", simulator.getSensorType());
+							
+							simulator.getGateway().send(simulator.getDeviceToken(), simulator.getSpecId(), message);
+						}else{
+							
+							byte[] payload = (byte[]) data;
+							
+							final String contentType = simulator.getContentType();
+							final String properties = simulator.getProperties();
+							
+							simulator.getGateway().send(simulator.getDeviceToken(), simulator.getRuleType(), simulator.getBinaryDataType(), payload, contentType, properties);
+						}
 						
-						//System.out.format("Sending spec:%d data:%s\n", simulator.getSpecId(), data);
-						
-						simulator.getGateway().send(simulator.getDeviceToken(), Config.get().getSpecId(), data);
 						
 					}catch(Exception ex) {
 						ex.printStackTrace();

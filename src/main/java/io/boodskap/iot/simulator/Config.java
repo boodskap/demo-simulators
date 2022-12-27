@@ -39,12 +39,14 @@ public class Config {
 	private final String mqttUrl = Config.getArgOrEnvOrCfg("MQTT_URL", "tcp://v5.boodskap.io:1883");
 	private final String domainKey = Config.getArgOrEnvOrCfg("DOMAIN_KEY", null);
 	private final String apiKey = Config.getArgOrEnvOrCfg("API_KEY", null);
-	private final int specId = Integer.valueOf(Config.getArgOrEnvOrCfg("SPEC_ID", "100000"));
+	private final int specId = Integer.valueOf(Config.getArgOrEnvOrCfg("SPEC_ID", "100"));
 	
 	private final String parkingDevToken = Config.getArgOrEnvOrCfg("PARKING_DEV_TOKEN", null);
 	private final String parkingGarageId = Config.getArgOrEnvOrCfg("PARKING_GARAGE_ID", "1 Penn Plazza");
 	private final int parkingGarageRows = Integer.valueOf(Config.getArgOrEnvOrCfg("PARKING_GARAGE_ROWS", "2"));
 	private final int parkingGarageCols = Integer.valueOf(Config.getArgOrEnvOrCfg("PARKING_GARAGE_COLS", "10"));
+	
+	private final String lht65DevToken = Config.getArgOrEnvOrCfg("LHT65_DEV_TOKEN", null); 
 
 	private Config() {
 	}
@@ -108,6 +110,10 @@ public class Config {
 
 	public int getSpecId() {
 		return specId;
+	}
+
+	public String getLht65DevToken() {
+		return lht65DevToken;
 	}
 
 }
