@@ -2,6 +2,11 @@ package io.boodskap.iot.simulator;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -10,11 +15,17 @@ public class Config {
 	
 	private static final Properties props = new Properties();
 
+	private static final String dbPath;
+	
+	private static final ThreadLocal<Connection> MYCONNECTION = new ThreadLocal<Connection>();
+	
 	static {
 		try {
 			
 			final File homeDir =  new File(System.getProperty("user.home"));
 			final File configDir = new File(homeDir, "config");
+			configDir.mkdirs();
+			
 			final String defConfigPath = new File(configDir, "simulator.properties").getAbsolutePath();
 			final String configPath = Config.getArgOrEnv("CONFIG", defConfigPath);
 			final File configFile = new File(configPath);
@@ -27,9 +38,36 @@ public class Config {
 				props.load(new FileInputStream(configFile));
 			}
 			
+			File file = new File(configDir, "simulators.db");
+			dbPath = file.getAbsolutePath();
+			
+			Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {	
+				@Override
+				public void run() {
+					try {
+						System.err.println("Shutting down....");
+						System.err.flush();
+						Config.getConnection().createStatement().execute("SHUTDOWN COMPACT");
+						Config.closeConnection();
+					}catch(Exception ex) {
+						ex.printStackTrace();
+					}
+				}
+			}));
+			
+			Class.forName("org.hsqldb.jdbc.JDBCDriver");
+			
+			Connection c = Config.getConnection();
+			
+			c.createStatement().execute("CREATE TABLE IF NOT EXISTS STAMPS(KEY VARCHAR(255) NOT NULL, STAMP NUMERIC NOT NULL, PRIMARY KEY (KEY));");
+			
+			Config.closeConnection();
+			
+			
 		}catch(Exception ex) {
 			ex.printStackTrace();
 			System.exit(-1);
+			throw new RuntimeException();//This should never happen
 		}
 	}
 	
@@ -47,6 +85,7 @@ public class Config {
 	private final int parkingGarageCols = Integer.valueOf(Config.getArgOrEnvOrCfg("PARKING_GARAGE_COLS", "10"));
 	
 	private final String lht65DevToken = Config.getArgOrEnvOrCfg("LHT65_DEV_TOKEN", null); 
+	private final String hequipDevToken = Config.getArgOrEnvOrCfg("HEQUIP_DEV_TOKEN", null); 
 
 	private Config() {
 	}
@@ -74,6 +113,85 @@ public class Config {
 	
 	public static final Config get() {
 		return instance;
+	}
+	
+	public static final Connection getConnection() throws SQLException {
+		
+		Connection c = MYCONNECTION.get();
+		
+		if(null == c || c.isClosed()) {
+			c = DriverManager.getConnection(String.format("jdbc:hsqldb:file:%s;", dbPath), "SA", "");
+			MYCONNECTION.set(c);
+		}
+		
+		c.setAutoCommit(true);
+		
+		return c;
+		
+	}
+	
+	public static final void closeConnection(){
+		
+		try {
+			
+			Connection c = MYCONNECTION.get();
+			
+			if(null != c && !c.isClosed()) {
+				c.commit();
+				c.close();
+				MYCONNECTION.remove();
+			}
+			
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		}
+		
+	}
+
+	public long getOrCreateStamp(String key) throws SQLException {
+		
+		final Long value;
+		
+		try {
+			
+			Connection c = Config.getConnection();
+			
+			ResultSet rs = c.createStatement().executeQuery("SELECT STAMP FROM STAMPS WHERE KEY='" + key + "'");
+			
+			if(rs.next()) {
+				value = rs.getLong("STAMP");
+			}else {
+				value = putStamp(key);
+			}
+			
+		}finally {
+			Config.closeConnection();
+		}
+		
+		return value;
+	}
+	
+	public long putStamp(String key) throws SQLException {
+		try {
+			
+			long stamp = System.currentTimeMillis();
+			
+			Connection c = Config.getConnection();
+			
+			PreparedStatement dps = c.prepareStatement("DELETE FROM STAMPS WHERE KEY=?");
+			dps.setString(1, key);
+			dps.executeUpdate();
+			
+			PreparedStatement ps = c.prepareStatement("INSERT INTO STAMPS(KEY,STAMP) VALUES(?,?)");
+			ps.setString(1, key);
+			ps.setLong(2, stamp);
+			ps.executeUpdate();
+			
+			return stamp;
+			
+		}finally {
+			Config.closeConnection();
+		}
 	}
 
 	public String getMqttUrl() {
@@ -114,6 +232,10 @@ public class Config {
 
 	public String getLht65DevToken() {
 		return lht65DevToken;
+	}
+
+	public String getHequipDevToken() {
+		return hequipDevToken;
 	}
 
 }

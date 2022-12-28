@@ -7,6 +7,8 @@ public interface IGateway {
 
 	public void init() throws Exception;
 	
+	public String getId();
+	
 	public String getDeviceToken();
 	
 	public Set<? extends ISimulator> getSimulators();

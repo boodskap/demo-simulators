@@ -31,6 +31,11 @@ public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 	}
 
 	@Override
+	public String getDeviceId() {
+		return deviceId;
+	}
+
+	@Override
 	public String getSensorType() {
 		return "PARKING";
 	}
@@ -51,7 +56,7 @@ public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 			
 			Map<String, Object> data = new HashMap<>();
 			
-			data.put("garage", getGateway().getGarageId());
+			data.put("garage", getGateway().getId());
 			
 			if(!getGateway().isConfigSent()) {
 				data.put("lot", String.format("%d,%d", getGateway().getRows(), getGateway().getColumns()));
@@ -62,7 +67,6 @@ public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 			//System.exit(-1);
 			
 			data.put("lot", String.format("ROW%dCOL%d", row, column));
-			data.put("devid", deviceId);
 			
 			if(occupied) {
 				data.put("distance", RandomUtils.nextInt(5500, 7501));

@@ -24,7 +24,7 @@ public class DraginoGateway extends AbstractGateway {
 	@Override
 	public void init() throws Exception {
 		
-		TOPICS.add(String.format("/%s/sub/downlink/%s", Config.get().getDomainKey(), getGatewayId()));
+		TOPICS.add(String.format("/%s/sub/downlink/%s", Config.get().getDomainKey(), getId()));
 		
 		simulators.add(new LHT65Simulator(this, "LHT65001", "2015/01/27", 20, 30, 6));
 		simulators.add(new LHT65Simulator(this, "LHT65002", "2021/03/06", 30, 35, 7));
@@ -73,7 +73,8 @@ public class DraginoGateway extends AbstractGateway {
 		return TOPICS;
 	}
 
-	public String getGatewayId() {
+	@Override
+	public String getId() {
 		return gatewayId;
 	}
 

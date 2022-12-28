@@ -8,13 +8,15 @@ public interface ISimulator {
 	
 	public String getDeviceToken();
 	
+	public String getDeviceId();
+	
 	public boolean canSimulate();
 
 	/**
 	 * 
 	 * @return Either Map<String, Object> or byte[]
 	 */
-	public Object simulate();
+	public Object simulate()throws Exception;
 	
 	public long getSpecId();
 	

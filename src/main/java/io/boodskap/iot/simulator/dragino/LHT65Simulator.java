@@ -82,8 +82,13 @@ public class LHT65Simulator extends AbstractSimulator<DraginoGateway> {
 	}
 
 	@Override
-	public String getProperties() {
+	public String getDeviceId() {
 		return sensorId;
+	}
+
+	@Override
+	public String getProperties() {
+		return getDeviceId();
 	}
 
 	@Override

@@ -51,7 +51,8 @@ public class ParkingGateway extends AbstractGateway {
 		return simulators;
 	}
 
-	public String getGarageId() {
+	@Override
+	public String getId() {
 		return garageId;
 	}
 

@@ -7,6 +7,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import io.boodskap.iot.simulator.common.Odometer;
+import io.boodskap.iot.simulator.dragino.DraginoGateway;
+import io.boodskap.iot.simulator.he.HeavyEquipmentGateway;
 import io.boodskap.iot.simulator.parking.ParkingGateway;
 
 public class SimulatorMain{
@@ -17,8 +20,9 @@ public class SimulatorMain{
 	
 	static {
 
+		GATEWAYS.add(new HeavyEquipmentGateway("HEQ01", Odometer.DrivingMode.DAY_NIGHT));
+		GATEWAYS.add(new DraginoGateway("GRAGINOGW01"));
 		GATEWAYS.add(new ParkingGateway(Config.get().getParkingGarageId(), Config.get().getParkingGarageRows(), Config.get().getParkingGarageCols()));
-		//GATEWAYS.add(new DraginoGateway("GRAGINOGW01"));
 	}
 	
 	static {
@@ -91,6 +95,7 @@ public class SimulatorMain{
 							Map<String, Object> message = (Map<String, Object>) data;
 							
 							message.put("sensor", simulator.getSensorType());
+							message.put("devid", simulator.getDeviceId());
 							
 							simulator.getGateway().send(simulator.getDeviceToken(), simulator.getSpecId(), message);
 						}else{
