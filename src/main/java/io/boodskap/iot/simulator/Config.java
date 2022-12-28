@@ -2,6 +2,7 @@ package io.boodskap.iot.simulator;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -32,7 +33,10 @@ public class Config {
 			
 			if(!configFile.exists()) {
 				System.err.format("Config file %s not found, using defaults...\n", configFile.getAbsolutePath());
-				props.load(Config.class.getResourceAsStream("/config/simulator.properties"));
+				InputStream in = Config.class.getResourceAsStream("/config/simulator.properties");
+				if(null != in) {
+					props.load(in);
+				}
 			}else {
 				System.out.format("Config loading from %s\n", configFile.getAbsolutePath());
 				props.load(new FileInputStream(configFile));
