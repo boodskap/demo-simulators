@@ -16,13 +16,23 @@ public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 	private final int row;
 	private final int column;
 	private final String deviceId;
+	private final int minTime, maxTime;
 	
 	public ParkingSimulator(ParkingGateway gateway, int row, int column) {
 		super(gateway);
 		this.row = row;
 		this.column = column;
 		this.deviceId = String.format("PKGS%d%d", row, column);
-		calculateNextSimulationTime();
+		this.nextSimulationTime = System.currentTimeMillis() + ( RandomUtils.nextInt(0, 180) * 1000 );
+		
+		if(RandomUtils.nextBoolean()) {
+			minTime = RandomUtils.nextInt(600, 1800);
+			maxTime = RandomUtils.nextInt(3600, 10800);
+		}else {
+			minTime = RandomUtils.nextInt(600, 900);
+			maxTime = RandomUtils.nextInt(901, 2700);
+		}
+		
 	}
 
 	@Override
@@ -46,7 +56,7 @@ public class ParkingSimulator extends AbstractSimulator<ParkingGateway> {
 	}
 	
 	protected void calculateNextSimulationTime() {
-		nextSimulationTime = System.currentTimeMillis() + ( RandomUtils.nextInt(0, 180) * 1000 );		
+		nextSimulationTime = System.currentTimeMillis() + ( RandomUtils.nextInt(minTime, maxTime) * 1000 );		
 	}
 
 	@Override

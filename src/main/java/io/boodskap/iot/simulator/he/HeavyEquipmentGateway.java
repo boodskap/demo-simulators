@@ -1,14 +1,17 @@
 package io.boodskap.iot.simulator.he;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.json.JSONObject;
 
 import io.boodskap.iot.simulator.AbstractGateway;
 import io.boodskap.iot.simulator.Config;
 import io.boodskap.iot.simulator.ISimulator;
+import io.boodskap.iot.simulator.common.C02Sensor;
 import io.boodskap.iot.simulator.common.Odometer;
 
 public class HeavyEquipmentGateway extends AbstractGateway {
@@ -18,6 +21,9 @@ public class HeavyEquipmentGateway extends AbstractGateway {
 	
 	private final String gatewayId;
 	private final Odometer.DrivingMode drivingMode;
+	
+	private Odometer odometer;
+	private C02Sensor c02;
 	
 	public HeavyEquipmentGateway(String gatewayId, Odometer.DrivingMode drivingMode) {
 		this.gatewayId = gatewayId;
@@ -29,7 +35,10 @@ public class HeavyEquipmentGateway extends AbstractGateway {
 		
 		TOPICS.add(String.format("/%s/sub/downlink/%s", Config.get().getDomainKey(), getId()));
 		
-		simulators.add(new Odometer(this, drivingMode, "ODO01", getDeviceToken()));
+		odometer = new Odometer(this, drivingMode, "ODO01", getDeviceToken());
+		c02 = new C02Sensor(odometer, "C0201", getDeviceToken());
+		
+		simulators.addAll(Arrays.asList(odometer, c02));
 		
 	}
 
@@ -50,8 +59,26 @@ public class HeavyEquipmentGateway extends AbstractGateway {
 
 	@Override
 	public void messageArrived(String topic, MqttMessage message) throws Exception {
-		System.out.println("*** MESSAGE ARRIVED ***");
-		System.out.println(new String(message.getPayload()));
+		
+		try {
+			
+			System.out.println("*** MESSAGE ARRIVED ***");
+			
+			JSONObject json = new JSONObject(new String(message.getPayload()));
+			
+			System.out.println(json);
+			
+			if(json.optBoolean("odometer")) {
+				odometer.setMaintenanceDone();
+			}
+			
+			if(json.optBoolean("c02")) {
+				c02.setMaintenanceDone();
+			}
+			
+		}catch(Exception ex) {
+			
+		}
 	}
 
 	@Override

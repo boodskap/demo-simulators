@@ -50,6 +50,7 @@ public class Odometer extends AbstractSimulator<IGateway> {
 	private long nextSimulationTime = RandomUtils.nextLong(5000, 25000);
 	private Double reading;
 	private long lastSent;
+	private final boolean runOnSundays;
 	
 	public Odometer(IGateway gateway, DrivingMode drivingMode, String deviceId, String deviceToken) {
 		
@@ -61,7 +62,12 @@ public class Odometer extends AbstractSimulator<IGateway> {
 			this.deviceToken = deviceToken;
 			this.uniqueId = String.format("%s.%s", getGateway().getId(), getDeviceId());
 			this.reading = getReading();		
-			this.lastSent = Config.get().putStamp(uniqueId);			
+			this.lastSent = Config.get().putStamp(uniqueId);
+			
+			boolean sunday = RandomUtils.nextBoolean();
+			
+			runOnSundays = Boolean.valueOf(Config.get().getValue("RUN_ON_SUNDAYS", String.valueOf(sunday)));
+			
 		}catch(Exception ex) {
 			throw new RuntimeException(ex);
 		}
@@ -91,6 +97,45 @@ public class Odometer extends AbstractSimulator<IGateway> {
 	protected void calculateNextSimulationTime() {
 		nextSimulationTime = System.currentTimeMillis() + messageFrequency;		
 	}
+	
+	public void setMaintenanceDone() throws Exception {
+		
+		final String key = String.format("%s.%s.maintenance", getGateway().getId(), getDeviceId());
+		final String value = String.valueOf(getReading());
+		
+		Config.get().setValue(key, value);
+		
+		System.out.format("\n** Maintenance Reset At %s **\n", value);
+	}
+	
+	public boolean isRunning() {
+		
+		final Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(System.currentTimeMillis());
+		
+		boolean canProceed;
+		final int hour = cal.get(Calendar.HOUR_OF_DAY);
+		
+		switch(drivingMode) {
+		case DAY:
+			canProceed = (hour >= 5 && hour <= 20);
+			break;
+		case NIGHT:
+			canProceed = (hour >= 18 && hour <= 24 || hour >= 0 && hour <= 6);
+			break;
+		default:
+		case DAY_NIGHT:
+			canProceed = true;
+			break;
+		
+		}
+		
+		if(canProceed) {
+			canProceed = (runOnSundays || (cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY));
+		}
+		
+		return canProceed;
+	}
 
 
 	@Override
@@ -98,29 +143,10 @@ public class Odometer extends AbstractSimulator<IGateway> {
 		
 		try {
 			
-			Calendar cal = Calendar.getInstance();
-			cal.setTimeInMillis(System.currentTimeMillis());
-			
-			final boolean canProceed;
-			final int hour = cal.get(Calendar.HOUR_OF_DAY);
-			
-			switch(drivingMode) {
-			case DAY:
-				canProceed = (hour >= 5 && hour <= 20);
-				break;
-			case NIGHT:
-				canProceed = (hour >= 18 && hour <= 24 || hour >= 0 && hour <= 6);
-				break;
-			default:
-			case DAY_NIGHT:
-				canProceed = true;
-				break;
-			
-			}
-			
+			final boolean canProceed = isRunning();
 			int mph = 0;
 			
-			if (canProceed && cal.get(Calendar.DAY_OF_WEEK) != Calendar.SUNDAY) {
+			if (canProceed) {
 				
 				final double elapsed = (((System.currentTimeMillis() - lastSent)/1000D)/60D)/60D;
 				final double speed = RandomUtils.nextDouble(45D, 90D);

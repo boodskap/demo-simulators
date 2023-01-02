@@ -64,6 +64,7 @@ public class Config {
 			Connection c = Config.getConnection();
 			
 			c.createStatement().execute("CREATE TABLE IF NOT EXISTS STAMPS(KEY VARCHAR(255) NOT NULL, STAMP NUMERIC NOT NULL, PRIMARY KEY (KEY));");
+			c.createStatement().execute("CREATE TABLE IF NOT EXISTS PROPS(KEY VARCHAR(255) NOT NULL, VALUE VARCHAR(2048) NOT NULL, PRIMARY KEY (KEY));");
 			
 			Config.closeConnection();
 			
@@ -197,7 +198,69 @@ public class Config {
 			Config.closeConnection();
 		}
 	}
+	
+	public String getValue(String key) throws SQLException {
+		
+		final String value;
+		
+		try {
+			
+			Connection c = Config.getConnection();
+			
+			ResultSet rs = c.createStatement().executeQuery("SELECT VALUE FROM PROPS WHERE KEY='" + key + "'");
+			
+			if(rs.next()) {
+				value = rs.getString("STAMP");
+			}else {
+				value = null;;
+			}
+			
+		}finally {
+			Config.closeConnection();
+		}
+		
+		return value;
+	}
 
+	public String getValue(String key, String def) throws SQLException {
+		
+		String value;
+		
+		try {
+
+			value = getValue(key);
+			
+			if(null == value) {
+				value = def;
+				setValue(key, value);
+			}
+			
+		}finally {
+			Config.closeConnection();
+		}
+		
+		return value;
+	}
+
+	public void setValue(String key, String value) throws SQLException {
+		try {
+			
+			Connection c = Config.getConnection();
+			
+			PreparedStatement dps = c.prepareStatement("DELETE FROM PROPS WHERE KEY=?");
+			dps.setString(1, key);
+			dps.executeUpdate();
+			
+			PreparedStatement ps = c.prepareStatement("INSERT INTO PROPS(KEY,VALUE) VALUES(?,?)");
+			ps.setString(1, key);
+			ps.setString(2, value);
+			ps.executeUpdate();
+			
+		}finally {
+			Config.closeConnection();
+		}
+	}
+	
 	public String getMqttUrl() {
 		return mqttUrl;
 	}
