@@ -91,7 +91,6 @@ public class Config {
 	
 	private final String lht65DevToken = Config.getArgOrEnvOrCfg("LHT65_DEV_TOKEN", null); 
 	private final String hequipDevToken = Config.getArgOrEnvOrCfg("HEQUIP_DEV_TOKEN", null); 
-	private final String utilityDevToken = Config.getArgOrEnvOrCfg("UTILITY_DEV_TOKEN", null); 
 
 	private Config() {
 	}
@@ -304,10 +303,6 @@ public class Config {
 
 	public String getHequipDevToken() {
 		return hequipDevToken;
-	}
-
-	public String getUtilityDevToken() {
-		return utilityDevToken;
 	}
 
 }

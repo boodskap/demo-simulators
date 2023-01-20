@@ -21,9 +21,11 @@ public class UtilityGateway extends AbstractGateway {
 	private final Set<String> TOPICS = new HashSet<>();
 	
 	private final String gatewayId;
+	private final String tokenEnv;
 	
-	public UtilityGateway(String gatewayId) {
+	public UtilityGateway(String gatewayId, String tokenEnv) {
 		this.gatewayId = gatewayId;
+		this.tokenEnv = tokenEnv;
 	}
 
 	@Override
@@ -33,9 +35,9 @@ public class UtilityGateway extends AbstractGateway {
 		
 		for(int i=0;i<30;i++) {
 			
-			WaterMeter wm = new WaterMeter(this, "WM0" + (i+1), getDeviceToken());
-			ElectricityMeter em = new ElectricityMeter(this, "EM0" + (i+1), getDeviceToken());
-			GasMeter gm = new GasMeter(this, "GM0" + (i+1), getDeviceToken());
+			WaterMeter wm = new WaterMeter(this, "WM0" + (i+1) + gatewayId, getDeviceToken());
+			ElectricityMeter em = new ElectricityMeter(this, "EM0" + (i+1) + gatewayId, getDeviceToken());
+			GasMeter gm = new GasMeter(this, "GM0" + (i+1) + gatewayId, getDeviceToken());
 			
 			simulators.addAll(Arrays.asList(wm, em, gm));
 		}
@@ -45,7 +47,7 @@ public class UtilityGateway extends AbstractGateway {
 
 	@Override
 	public String getDeviceToken() {
-		return Config.get().getUtilityDevToken();
+		return Config.getArgOrEnvOrCfg(tokenEnv, null);
 	}
 
 	@Override

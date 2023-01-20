@@ -21,7 +21,8 @@ public class SimulatorMain{
 	
 	static {
 		
-		GATEWAYS.add(new UtilityGateway("UTGW01"));
+		GATEWAYS.add(new UtilityGateway("UTGW01", "UTILITY_DEV_TOKEN"));
+		GATEWAYS.add(new UtilityGateway("UTGW02", "UTILITY_DEV2_TOKEN"));
 		GATEWAYS.add(new HeavyEquipmentGateway("HEQ01", Odometer.DrivingMode.DAY_NIGHT));
 		GATEWAYS.add(new DraginoGateway("GRAGINOGW01"));
 		GATEWAYS.add(new ParkingGateway(Config.get().getParkingGarageId(), Config.get().getParkingGarageRows(), Config.get().getParkingGarageCols()));
