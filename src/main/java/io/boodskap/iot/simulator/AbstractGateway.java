@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -40,6 +41,12 @@ public abstract class AbstractGateway implements IGateway, MqttCallback {
 		if(null == mqtt) {
 			
 			MemoryPersistence persistence = new MemoryPersistence();
+			
+			final String clientId = getDeviceToken();
+			
+			if(StringUtils.isBlank(clientId)) {
+				System.err.format("%s getDeviceToken is null\n", getClass().getSimpleName());
+			}
 			
 			mqtt = new MqttClient(Config.get().getMqttUrl(), getDeviceToken(), persistence);
 			
